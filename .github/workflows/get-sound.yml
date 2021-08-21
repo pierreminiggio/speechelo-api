@@ -1,0 +1,34 @@
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: "Text to speak"
+        required: true
+        default: "In the wee hours of the morning, Tesla CEO Elon Musk replied a few times on Twitter confirming that Full Self-Driving Beta Version 9 is set to start rolling out this weekend. He clarified that it will start happening this Saturday, not Saturday in two weeks."
+      voice:
+        description: "Voice"
+        required: false
+        default: "owen-kid-male"
+name: Get voice
+jobs:
+  get:
+    name: Get voice
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@main
+      - uses: actions/setup-node@main
+      - run: sudo apt update
+      - run: npm i
+      - run: echo $text > input.txt
+        env:
+          text: ${{ github.event.inputs.text }}
+      - run: node dist/cli.js $LOGIN $PASSWORD ./input.txt $VOICE > voice.json
+        env:
+          LOGIN: ${{ secrets.LOGIN }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          voice: ${{ github.event.inputs.voice }}
+      - uses: actions/upload-artifact@v2
+        with:
+          name: voice.json
+          path: voice.json
