@@ -27,7 +27,7 @@ jobs:
         env:
           LOGIN: ${{ secrets.LOGIN }}
           PASSWORD: ${{ secrets.PASSWORD }}
-          voice: ${{ github.event.inputs.voice }}
+          VOICE: ${{ github.event.inputs.voice }}
       - uses: actions/upload-artifact@v2
         with:
           name: voice.json
