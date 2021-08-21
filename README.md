@@ -9,7 +9,7 @@ npm i pierreminiggio/speechelo-api
 
 ```javascript
 import SpeecheloAPI from '@pierreminiggio/speechelo-api'
-import OwenKidMale from './DTO/Voice/OwenKidMale'
+import OwenKidMale from '@pierreminiggio/speechelo-api/DTO/Voice/OwenKidMale'
 
 const speecheloAPI = new SpeecheloAPI('speecheloLogin', 'speecheloPassword')
 //speecheloAPI.puppeteerOptions = {headless: false}; // If you wanna see what's going on
