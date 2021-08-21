@@ -11,20 +11,34 @@ class SpeecheloAPI {
         this.puppeteerOptions = {
             args: ['--no-sandbox']
         };
+        this.afterCreationWaitingStrategy = {
+            waitingTimeInMiliseconds: 50,
+            tries: 2400
+        };
         this.login = login;
         this.password = password;
-    }
-    setPuppeteerOptions(puppeteerOptions) {
-        this.puppeteerOptions = puppeteerOptions;
     }
     async getSoundLink(text, voice) {
         const { browser, page } = await this.loginToPlatform();
         await this.closeTipsModalIfPresent(page);
-        await this.typeText(page, browser, text);
-        await this.selectLang(page, browser, voice.lang);
-        await this.selectVoice(page, browser, voice.name);
-        await this.selectEngine(page, browser, voice.engine);
-        return '';
+        const previousVoiceId = await this.getlastVoiceId(page, browser);
+        await this.generateVoice(page, browser, text, voice);
+        let triesLeft = this.afterCreationWaitingStrategy.tries;
+        const waitingTime = this.afterCreationWaitingStrategy.waitingTimeInMiliseconds;
+        while (triesLeft > 0) {
+            const newVoiceId = await this.getlastVoiceId(page, browser);
+            if (newVoiceId === previousVoiceId) {
+                await page.waitForTimeout(waitingTime);
+                triesLeft--;
+                continue;
+            }
+            const voiceLink = await this.getLastVoiceLink(page, browser);
+            await browser.close();
+            return voiceLink;
+        }
+        throw new Error('Timed out after '
+            + (waitingTime * this.afterCreationWaitingStrategy.tries / 1000)
+            + ' seconds');
     }
     async loginToPlatform() {
         let browser;
@@ -73,6 +87,13 @@ class SpeecheloAPI {
         return await page.evaluate((selectors) => {
             return document.querySelector(selectors) !== null;
         }, selectors);
+    }
+    async generateVoice(page, browser, text, voice) {
+        await this.typeText(page, browser, text);
+        await this.selectLang(page, browser, voice.lang);
+        await this.selectVoice(page, browser, voice.name);
+        await this.selectEngine(page, browser, voice.engine);
+        await this.submitVoiceGeneration(page, browser);
     }
     async typeText(page, browser, text) {
         const textInputSelector = '#tts-tarea';
@@ -137,5 +158,68 @@ class SpeecheloAPI {
             throw puppeteerError;
         }
     }
+    async submitVoiceGeneration(page, browser) {
+        const submitButtonSelector = '#ttsGenerateBtn';
+        const confirmButtonSelector = '.swal2-confirm:not([disabled])';
+        try {
+            await page.waitForSelector(submitButtonSelector);
+            await page.click(submitButtonSelector);
+            await page.waitForSelector(confirmButtonSelector);
+            await page.click(confirmButtonSelector);
+        }
+        catch (puppeteerError) {
+            await browser.close();
+            throw puppeteerError;
+        }
+    }
+    async getlastVoiceId(page, browser) {
+        try {
+            const lines = await page.$$(SpeecheloAPI.lineSelector);
+            const lastLine = lines[1];
+            if (lines.length === 2) {
+                const isEmpty = await lastLine.evaluate((element) => {
+                    return element.innerText.trim() === 'No data available in table';
+                });
+                if (isEmpty) {
+                    return null;
+                }
+            }
+            return parseInt(await lastLine.evaluate((element) => {
+                const idColumn = element.querySelector('td+td');
+                if (idColumn === null) {
+                    throw new Error('No id column');
+                }
+                return idColumn.innerText;
+            }));
+        }
+        catch (puppeteerError) {
+            await browser.close();
+            throw puppeteerError;
+        }
+    }
+    async getLastVoiceLink(page, browser) {
+        try {
+            return await page.evaluate((playButtonSelector) => {
+                const playButton = document.querySelector(playButtonSelector);
+                if (playButton === null) {
+                    throw new Error('Missing play button');
+                }
+                const dataset = playButton.dataset;
+                if (!dataset) {
+                    throw new Error('Play button lacks dataset');
+                }
+                const link = dataset.link;
+                if (!link) {
+                    throw new Error('Play button lacks dataset.link');
+                }
+                return link;
+            }, SpeecheloAPI.lineSelector + ' button');
+        }
+        catch (puppeteerError) {
+            await browser.close();
+            throw puppeteerError;
+        }
+    }
 }
 exports.default = SpeecheloAPI;
+SpeecheloAPI.lineSelector = '#blastered_datatable_wrapper tr';

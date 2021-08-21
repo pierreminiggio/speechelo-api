@@ -9,6 +9,11 @@ export type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & Br
     extraPrefsFirefox?: Record<string, unknown>;
 }
 
+export interface AfterCreationWaitingStrategy {
+    waitingTimeInMiliseconds: number
+    tries: number
+}
+
 interface BrowserAndPage {
     browser: Browser
     page: Page
@@ -18,28 +23,51 @@ export default class SpeecheloAPI {
 
     private login: string
     private password: string
-    private puppeteerOptions: PuppeteerOptions = {
+    public puppeteerOptions: PuppeteerOptions = {
         args: ['--no-sandbox']
     }
+    public afterCreationWaitingStrategy: AfterCreationWaitingStrategy = {
+        waitingTimeInMiliseconds: 50,
+        tries: 2400
+    }
+
+    private static lineSelector: string = '#blastered_datatable_wrapper tr'
 
     public constructor(login: string, password: string) {
         this.login = login
         this.password = password
     }
 
-    public setPuppeteerOptions(puppeteerOptions: PuppeteerOptions) {
-        this.puppeteerOptions = puppeteerOptions
-    }
-
     public async getSoundLink(text: string, voice: Voice): Promise<string> {
         
         const {browser, page}: BrowserAndPage = await this.loginToPlatform()
         await this.closeTipsModalIfPresent(page)
-        await this.typeText(page, browser, text)
-        await this.selectLang(page, browser, voice.lang)
-        await this.selectVoice(page, browser, voice.name)
-        await this.selectEngine(page, browser, voice.engine)
-        return ''
+        
+        const previousVoiceId = await this.getlastVoiceId(page, browser)
+        await this.generateVoice(page, browser, text, voice)
+
+        let triesLeft = this.afterCreationWaitingStrategy.tries
+        const waitingTime = this.afterCreationWaitingStrategy.waitingTimeInMiliseconds
+
+        while (triesLeft > 0) {
+            const newVoiceId = await this.getlastVoiceId(page, browser)
+            
+            if (newVoiceId === previousVoiceId) {
+                await page.waitForTimeout(waitingTime)
+                triesLeft--
+                continue
+            }
+
+            const voiceLink = await this.getLastVoiceLink(page, browser)
+            await browser.close()
+            return voiceLink
+        }
+
+        throw new Error(
+            'Timed out after '
+            + (waitingTime * this.afterCreationWaitingStrategy.tries / 1000)
+            + ' seconds'
+        )
     }
 
     private async loginToPlatform(): Promise<BrowserAndPage> {
@@ -109,6 +137,14 @@ export default class SpeecheloAPI {
         )
     }
 
+    private async generateVoice(page: Page, browser: Browser, text: string, voice: Voice): Promise<void> {
+        await this.typeText(page, browser, text)
+        await this.selectLang(page, browser, voice.lang)
+        await this.selectVoice(page, browser, voice.name)
+        await this.selectEngine(page, browser, voice.engine)
+        await this.submitVoiceGeneration(page, browser)
+    }
+
     private async typeText(page: Page, browser: Browser, text: string): Promise<void> {
         const textInputSelector = '#tts-tarea'
         try {
@@ -174,6 +210,84 @@ export default class SpeecheloAPI {
         
         try {
             await page.click(engineSelector)
+        } catch (puppeteerError: any) {
+            await browser.close()
+            throw puppeteerError
+        }
+    }
+
+    private async submitVoiceGeneration(page: Page, browser: Browser): Promise<void> {
+        const submitButtonSelector = '#ttsGenerateBtn'
+        const confirmButtonSelector = '.swal2-confirm:not([disabled])'
+        try {
+            await page.waitForSelector(submitButtonSelector)
+            await page.click(submitButtonSelector)
+            await page.waitForSelector(confirmButtonSelector)
+            await page.click(confirmButtonSelector)
+        } catch (puppeteerError: any) {
+            await browser.close()
+            throw puppeteerError
+        }
+    }
+
+    private async getlastVoiceId(page: Page, browser: Browser): Promise<number|null> {
+
+        try {
+            const lines = await page.$$<HTMLElement>(SpeecheloAPI.lineSelector)
+
+            const lastLine = lines[1]
+
+            if (lines.length === 2) {
+                const isEmpty = await lastLine.evaluate((element: HTMLElement): boolean => {
+                    return element.innerText.trim() === 'No data available in table'
+                })
+
+                if (isEmpty) {
+                    return null
+                }
+            }
+
+            return parseInt(await lastLine.evaluate((element: HTMLElement): string => {
+                const idColumn = element.querySelector<HTMLElement>('td+td')
+
+                if (idColumn === null) {
+                    throw new Error('No id column')
+                }
+
+                return idColumn.innerText
+            }))
+        } catch (puppeteerError: any) {
+            await browser.close()
+            throw puppeteerError
+        }
+    }
+
+    private async getLastVoiceLink(page: Page, browser: Browser): Promise<string> {
+        try {
+            return await page.evaluate(
+                (playButtonSelector: string): string => {
+                    const playButton = document.querySelector<HTMLButtonElement>(playButtonSelector)
+
+                    if (playButton === null) {
+                        throw new Error('Missing play button')
+                    }
+
+                    const dataset = playButton.dataset
+
+                    if (! dataset) {
+                        throw new Error('Play button lacks dataset')
+                    }
+
+                    const link = dataset.link
+
+                    if (! link) {
+                        throw new Error('Play button lacks dataset.link')
+                    }
+
+                    return link
+                },
+                SpeecheloAPI.lineSelector + ' button'
+            )
         } catch (puppeteerError: any) {
             await browser.close()
             throw puppeteerError

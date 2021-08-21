@@ -4,18 +4,27 @@ export declare type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOpti
     product?: Product;
     extraPrefsFirefox?: Record<string, unknown>;
 };
+export interface AfterCreationWaitingStrategy {
+    waitingTimeInMiliseconds: number;
+    tries: number;
+}
 export default class SpeecheloAPI {
     private login;
     private password;
-    private puppeteerOptions;
+    puppeteerOptions: PuppeteerOptions;
+    afterCreationWaitingStrategy: AfterCreationWaitingStrategy;
+    private static lineSelector;
     constructor(login: string, password: string);
-    setPuppeteerOptions(puppeteerOptions: PuppeteerOptions): void;
     getSoundLink(text: string, voice: Voice): Promise<string>;
     private loginToPlatform;
     private closeTipsModalIfPresent;
     private isElementPresent;
+    private generateVoice;
     private typeText;
     private selectLang;
     private selectVoice;
     private selectEngine;
+    private submitVoiceGeneration;
+    private getlastVoiceId;
+    private getLastVoiceLink;
 }
