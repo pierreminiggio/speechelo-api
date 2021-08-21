@@ -1,0 +1,4 @@
+/dist/test.*
+/ids.json
+/node_modules
+/tsconfig.tsbuildinfo

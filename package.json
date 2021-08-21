@@ -1,0 +1,26 @@
+{
+  "name": "@pierreminiggio/speechelo-api",
+  "version": "1.0.0",
+  "description": "Speechelo API",
+  "main": "dist/SpeecheloAPI.js",
+  "scripts": {
+    "build": "tsc -d",
+    "test": "tsc -d && node dist/test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pierreminiggio/speechelo-api.git"
+  },
+  "author": "Pierre Miniggio",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pierreminiggio/speechelo-api/issues"
+  },
+  "homepage": "https://github.com/pierreminiggio/speechelo-api#readme",
+  "devDependencies": {
+    "typescript": "^4.3.5"
+  },
+  "dependencies": {
+    "puppeteer": "^10.2.0"
+  }
+}
