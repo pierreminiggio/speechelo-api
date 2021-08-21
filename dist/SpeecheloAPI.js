@@ -165,10 +165,28 @@ class SpeecheloAPI {
         try {
             await page.waitForSelector(submitButtonSelector);
             await page.click(submitButtonSelector);
-            await page.waitForTimeout(2000);
-            const hasNotEnoughPunctuation = await page.evaluate((notEnoughPunctuationSelector) => {
-                return document.querySelector(notEnoughPunctuationSelector) !== null;
-            }, notEnoughPunctuationSelector);
+            const hasNotEnoughPunctuation = await Promise.race([
+                new Promise(async (resolve, reject) => {
+                    try {
+                        await page.waitForSelector(notEnoughPunctuationSelector);
+                    }
+                    catch (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve(true);
+                }),
+                new Promise(async (resolve, reject) => {
+                    try {
+                        await page.waitForSelector(confirmButtonSelector);
+                    }
+                    catch (error) {
+                        reject(error);
+                        return;
+                    }
+                    resolve(false);
+                })
+            ]);
             if (hasNotEnoughPunctuation) {
                 await page.click(notEnoughPunctuationSelector);
             }
