@@ -4,12 +4,12 @@ import Lang from './DTO/Lang'
 import Voice from './DTO/Voice/Voice'
 import VoiceName from './DTO/Voice/VoiceName'
 
-export type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
+type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
     product?: Product;
     extraPrefsFirefox?: Record<string, unknown>;
 }
 
-export interface AfterCreationWaitingStrategy {
+interface AfterCreationWaitingStrategy {
     waitingTimeInMiliseconds: number
     tries: number
 }
@@ -18,6 +18,8 @@ interface BrowserAndPage {
     browser: Browser
     page: Page
 }
+
+type AudioFileUrl = string
 
 export default class SpeecheloAPI {
 
@@ -38,7 +40,7 @@ export default class SpeecheloAPI {
         this.password = password
     }
 
-    public async getSoundLink(text: string, voice: Voice): Promise<string> {
+    public async getSoundLink(text: string, voice: Voice): Promise<AudioFileUrl> {
         
         const {browser, page}: BrowserAndPage = await this.loginToPlatform()
         await this.closeTipsModalIfPresent(page)
@@ -294,3 +296,5 @@ export default class SpeecheloAPI {
         }
     }
 }
+
+export {PuppeteerOptions, AfterCreationWaitingStrategy}

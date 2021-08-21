@@ -1,7 +1,6 @@
 import SpeecheloAPI from './SpeecheloAPI'
 import fs from 'fs'
 import OwenKidMale from './DTO/Voice/OwenKidMale'
-
  
 const ids = JSON.parse(fs.readFileSync('./ids.json').toString())
 

@@ -1,13 +1,14 @@
 import { BrowserConnectOptions, BrowserLaunchArgumentOptions, LaunchOptions, Product } from 'puppeteer';
 import Voice from './DTO/Voice/Voice';
-export declare type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
+declare type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
     product?: Product;
     extraPrefsFirefox?: Record<string, unknown>;
 };
-export interface AfterCreationWaitingStrategy {
+interface AfterCreationWaitingStrategy {
     waitingTimeInMiliseconds: number;
     tries: number;
 }
+declare type AudioFileUrl = string;
 export default class SpeecheloAPI {
     private login;
     private password;
@@ -15,7 +16,7 @@ export default class SpeecheloAPI {
     afterCreationWaitingStrategy: AfterCreationWaitingStrategy;
     private static lineSelector;
     constructor(login: string, password: string);
-    getSoundLink(text: string, voice: Voice): Promise<string>;
+    getSoundLink(text: string, voice: Voice): Promise<AudioFileUrl>;
     private loginToPlatform;
     private closeTipsModalIfPresent;
     private isElementPresent;
@@ -28,3 +29,4 @@ export default class SpeecheloAPI {
     private getlastVoiceId;
     private getLastVoiceLink;
 }
+export { PuppeteerOptions, AfterCreationWaitingStrategy };
