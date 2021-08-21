@@ -160,10 +160,18 @@ class SpeecheloAPI {
     }
     async submitVoiceGeneration(page, browser) {
         const submitButtonSelector = '#ttsGenerateBtn';
+        const notEnoughPunctuationSelector = '.swal2-confirm.btn-danger';
         const confirmButtonSelector = '.swal2-confirm:not([disabled])';
         try {
             await page.waitForSelector(submitButtonSelector);
             await page.click(submitButtonSelector);
+            await page.waitForTimeout(2000);
+            const hasNotEnoughPunctuation = await page.evaluate((notEnoughPunctuationSelector) => {
+                return document.querySelector(notEnoughPunctuationSelector) !== null;
+            }, notEnoughPunctuationSelector);
+            if (hasNotEnoughPunctuation) {
+                await page.click(notEnoughPunctuationSelector);
+            }
             await page.waitForSelector(confirmButtonSelector);
             await page.click(confirmButtonSelector);
         }
