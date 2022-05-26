@@ -23,11 +23,13 @@ jobs:
       - run: echo $text > input.txt
         env:
           text: ${{ github.event.inputs.text }}
-      - run: node dist/cli.js $LOGIN $PASSWORD ./input.txt $VOICE > voice.json
+      - run: node dist/cli.js $LOGIN $PASSWORD ./input.txt $VOICE $CAPTCHA_RESOLVER_URL $CAPTCHA_RESOLVER_TOKEN > voice.json
         env:
           LOGIN: ${{ secrets.LOGIN }}
           PASSWORD: ${{ secrets.PASSWORD }}
           VOICE: ${{ github.event.inputs.voice }}
+          CAPTCHA_RESOLVER_URL: ${{ secrets.CAPTCHA_RESOLVER_URL }}
+          CAPTCHA_RESOLVER_TOKEN: ${{ secrets.CAPTCHA_RESOLVER_TOKEN }}
       - uses: actions/upload-artifact@v2
         with:
           name: voice.json
