@@ -108,6 +108,8 @@ export default class SpeecheloAPI {
                 captchaImageSelector
             )
 
+            let captcha: string|null = null
+
             if (captchaImageSrc) {
                 
                 const captchaResolver = this.captchaResolver
@@ -116,7 +118,7 @@ export default class SpeecheloAPI {
                     throw new Error('A Captcha is displayed, you need to set up a captchaResolver to solve it')
                 }
 
-                const captcha = await captchaResolver(captchaImageSrc)
+                captcha = await captchaResolver(captchaImageSrc)
 
                 if (captcha === null) {
                     throw new Error('Solving Captcha failed')
@@ -132,7 +134,13 @@ export default class SpeecheloAPI {
             await page.click(signInButtonSelector)
 
             const navbarBrandLinkSelector = '.navbar-brand'
-            await page.waitForSelector(navbarBrandLinkSelector)
+            try {
+                await page.waitForSelector(navbarBrandLinkSelector)
+            } catch (e) {
+                throw new Error('Waiting for Navbar failed.' + (
+                    captchaImageSrc ? (' Maybe Captcha solving error ? Url : ' + captchaImageSrc + ' Captcha : ' + captcha) : ''
+                ))
+            }
 
             return {browser, page}
         } catch (puppeteerError: any) {

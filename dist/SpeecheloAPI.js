@@ -62,12 +62,13 @@ class SpeecheloAPI {
             await page.type(passwordInputSelector, this.password, { delay });
             const captchaImageSelector = '[src^="https://app.blasteronline.com/assets/captcha/"]';
             const captchaImageSrc = await page.evaluate(captchaImageSelector => { var _a; return ((_a = document.querySelector(captchaImageSelector)) === null || _a === void 0 ? void 0 : _a.src) || null; }, captchaImageSelector);
+            let captcha = null;
             if (captchaImageSrc) {
                 const captchaResolver = this.captchaResolver;
                 if (!captchaResolver) {
                     throw new Error('A Captcha is displayed, you need to set up a captchaResolver to solve it');
                 }
-                const captcha = await captchaResolver(captchaImageSrc);
+                captcha = await captchaResolver(captchaImageSrc);
                 if (captcha === null) {
                     throw new Error('Solving Captcha failed');
                 }
@@ -78,7 +79,12 @@ class SpeecheloAPI {
             const signInButtonSelector = '#login_button';
             await page.click(signInButtonSelector);
             const navbarBrandLinkSelector = '.navbar-brand';
-            await page.waitForSelector(navbarBrandLinkSelector);
+            try {
+                await page.waitForSelector(navbarBrandLinkSelector);
+            }
+            catch (e) {
+                throw new Error('Waiting for Navbar failed.' + (captchaImageSrc ? (' Maybe Captcha solving error ? Url : ' + captchaImageSrc + ' Captcha : ' + captcha) : ''));
+            }
             return { browser, page };
         }
         catch (puppeteerError) {
