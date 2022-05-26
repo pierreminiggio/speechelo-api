@@ -2,12 +2,14 @@ import SpeecheloAPI from './SpeecheloAPI'
 import fs from 'fs'
 import VoiceName from './DTO/Voice/VoiceName'
 import getVoiceFromVoiceName from './getVoiceFromVoiceName'
+import APICaptchaResolver from './APICaptchaResolver'
+import CaptchaResolver from './CaptchaResolver'
 
 const args = process.argv
 const argsLength = args.length
 
-if (argsLength !== 6) {
-    console.log('Use like this : node dist/cli.js <login> <password> <filePath> <voice>')
+if (argsLength < 6) {
+    console.log('Use like this : node dist/cli.js <login> <password> <filePath> <voice> [captchaResolverUrl] [captchaResolverToken]')
     process.exit()
 }
 
@@ -24,7 +26,15 @@ if (! availableVoices.includes(voice)) {
     process.exit()
 }
 
-const speecheloAPI = new SpeecheloAPI(login, password);
+const captchaResolverUrl = argsLength >= 7 ? args[6] : null
+const captchaResolverToken = argsLength >= 8 ? args[7] : null
+
+const captchaResolver: CaptchaResolver|undefined = captchaResolverUrl && captchaResolverToken ? new APICaptchaResolver(
+    captchaResolverUrl,
+    captchaResolverToken
+).getResolver() : undefined
+
+const speecheloAPI = new SpeecheloAPI(login, password, captchaResolver);
 
 (async() => {
     const owenOutputLink = await speecheloAPI.getSoundLink(fileContent, getVoiceFromVoiceName(voice))

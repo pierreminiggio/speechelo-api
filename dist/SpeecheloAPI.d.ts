@@ -1,4 +1,5 @@
 import { BrowserConnectOptions, BrowserLaunchArgumentOptions, LaunchOptions, Product } from 'puppeteer';
+import CaptchaResolver from './CaptchaResolver';
 import Voice from './DTO/Voice/Voice';
 declare type PuppeteerOptions = LaunchOptions & BrowserLaunchArgumentOptions & BrowserConnectOptions & {
     product?: Product;
@@ -9,7 +10,6 @@ interface AfterCreationWaitingStrategy {
     tries: number;
 }
 declare type AudioFileUrl = string;
-declare type CaptchaResolver = (captchaUrl: string) => Promise<string | null>;
 export default class SpeecheloAPI {
     private login;
     private password;
