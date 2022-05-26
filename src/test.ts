@@ -17,7 +17,6 @@ const speecheloAPI = new SpeecheloAPI(ids.login, ids.password, async (captchaUrl
     }
 
     const responseText = await response.text()
-    console.log(responseText)
 
     if (responseText.length !== 8) {
         return null
