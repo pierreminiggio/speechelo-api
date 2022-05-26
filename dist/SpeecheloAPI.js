@@ -7,7 +7,7 @@ const puppeteer_1 = __importDefault(require("puppeteer"));
 const Engine_1 = __importDefault(require("./DTO/Engine"));
 const VoiceName_1 = __importDefault(require("./DTO/Voice/VoiceName"));
 class SpeecheloAPI {
-    constructor(login, password) {
+    constructor(login, password, captchaResolver = undefined) {
         this.puppeteerOptions = {
             args: ['--no-sandbox']
         };
@@ -17,6 +17,7 @@ class SpeecheloAPI {
         };
         this.login = login;
         this.password = password;
+        this.captchaResolver = captchaResolver;
     }
     async getSoundLink(text, voice) {
         const { browser, page } = await this.loginToPlatform();
@@ -59,6 +60,21 @@ class SpeecheloAPI {
             await page.type(emailInputSelector, this.login, { delay });
             await page.waitForSelector(passwordInputSelector);
             await page.type(passwordInputSelector, this.password, { delay });
+            const captchaImageSelector = '[src^="https://app.blasteronline.com/assets/captcha/"]';
+            const captchaImageSrc = await page.evaluate(captchaImageSelector => { var _a; return ((_a = document.querySelector(captchaImageSelector)) === null || _a === void 0 ? void 0 : _a.src) || null; }, captchaImageSelector);
+            if (captchaImageSrc) {
+                const captchaResolver = this.captchaResolver;
+                if (!captchaResolver) {
+                    throw new Error('A Captcha is displayed, you need to set up a captchaResolver to solve it');
+                }
+                const captcha = await captchaResolver(captchaImageSrc);
+                if (captcha === null) {
+                    throw new Error('Solving Captcha failed');
+                }
+                const captchaInputSelector = '#captcha';
+                await page.waitForSelector(captchaInputSelector);
+                await page.type(captchaInputSelector, captcha, { delay });
+            }
             const signInButtonSelector = '#login_button';
             await page.click(signInButtonSelector);
             const navbarBrandLinkSelector = '.navbar-brand';

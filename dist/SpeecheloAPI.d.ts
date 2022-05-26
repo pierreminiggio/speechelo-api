@@ -9,13 +9,15 @@ interface AfterCreationWaitingStrategy {
     tries: number;
 }
 declare type AudioFileUrl = string;
+declare type CaptchaResolver = (captchaUrl: string) => Promise<string | null>;
 export default class SpeecheloAPI {
     private login;
     private password;
+    private captchaResolver;
     puppeteerOptions: PuppeteerOptions;
     afterCreationWaitingStrategy: AfterCreationWaitingStrategy;
     private static lineSelector;
-    constructor(login: string, password: string);
+    constructor(login: string, password: string, captchaResolver?: CaptchaResolver | undefined);
     getSoundLink(text: string, voice: Voice): Promise<AudioFileUrl>;
     private loginToPlatform;
     private closeTipsModalIfPresent;

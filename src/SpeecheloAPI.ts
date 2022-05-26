@@ -21,10 +21,14 @@ interface BrowserAndPage {
 
 type AudioFileUrl = string
 
+type CaptchaResolver = (captchaUrl: string) => Promise<string|null>
+
 export default class SpeecheloAPI {
 
     private login: string
     private password: string
+    private captchaResolver: CaptchaResolver|undefined
+
     public puppeteerOptions: PuppeteerOptions = {
         args: ['--no-sandbox']
     }
@@ -35,9 +39,10 @@ export default class SpeecheloAPI {
 
     private static lineSelector: string = '#blastered_datatable_wrapper tr'
 
-    public constructor(login: string, password: string) {
+    public constructor(login: string, password: string, captchaResolver: CaptchaResolver|undefined = undefined) {
         this.login = login
         this.password = password
+        this.captchaResolver = captchaResolver
     }
 
     public async getSoundLink(text: string, voice: Voice): Promise<AudioFileUrl> {
@@ -97,6 +102,32 @@ export default class SpeecheloAPI {
 
             await page.waitForSelector(passwordInputSelector)
             await page.type(passwordInputSelector, this.password, {delay})
+
+            const captchaImageSelector = '[src^="https://app.blasteronline.com/assets/captcha/"]'
+            const captchaImageSrc = await page.evaluate(
+                captchaImageSelector => document.querySelector(captchaImageSelector)?.src || null,
+                captchaImageSelector
+            )
+
+            if (captchaImageSrc) {
+                
+                const captchaResolver = this.captchaResolver
+
+                if (! captchaResolver) {
+                    throw new Error('A Captcha is displayed, you need to set up a captchaResolver to solve it')
+                }
+
+                const captcha = await captchaResolver(captchaImageSrc)
+
+                if (captcha === null) {
+                    throw new Error('Solving Captcha failed')
+                }
+
+                const captchaInputSelector = '#captcha'
+                await page.waitForSelector(captchaInputSelector)
+
+                await page.type(captchaInputSelector, captcha, {delay})
+            }
 
             const signInButtonSelector = '#login_button'
             await page.click(signInButtonSelector)
