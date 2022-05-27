@@ -5,7 +5,8 @@
   "main": "dist/SpeecheloAPI.js",
   "scripts": {
     "build": "tsc -d",
-    "test": "tsc -d && node dist/test.js"
+    "test": "tsc -d && node dist/test.js",
+    "test-prompt-captcha": "tsc -d && node dist/test-prompt-captcha.js"
   },
   "repository": {
     "type": "git",
