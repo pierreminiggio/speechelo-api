@@ -265,10 +265,11 @@ export default class SpeecheloAPI {
             await page.waitForSelector(submitButtonSelector)
             await page.click(submitButtonSelector)
 
+            const timeOutBeforeDying = 60000
             const hasNotEnoughPunctuation = await Promise.race([
                 new Promise<boolean>(async (resolve, reject) => {
                     try {
-                        await page.waitForSelector(notEnoughPunctuationSelector)
+                        await page.waitForSelector(notEnoughPunctuationSelector, {timeout: timeOutBeforeDying})
                     } catch (error) {
                         reject(error)
 
@@ -279,7 +280,7 @@ export default class SpeecheloAPI {
                 }),
                 new Promise<boolean>(async (resolve, reject) => {
                     try {
-                        await page.waitForSelector(confirmButtonSelector)
+                        await page.waitForSelector(confirmButtonSelector, {timeout: timeOutBeforeDying})
                     } catch (error) {
                         reject(error)
 
