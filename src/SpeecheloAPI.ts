@@ -104,7 +104,19 @@ export default class SpeecheloAPI {
 
             const captchaImageSelector = '[src^="https://app.blasteronline.com/assets/captcha/"]'
             const captchaImageSrc = await page.evaluate(
-                captchaImageSelector => document.querySelector(captchaImageSelector)?.src || null,
+                captchaImageSelector => {
+                    const captchaImageElement = document.querySelector(captchaImageSelector)
+
+                    if (! captchaImageElement) {
+                        return null
+                    }
+
+                    if (captchaImageElement.offsetParent === null) {
+                        return null
+                    }
+
+                    return captchaImageElement.src || null
+                },
                 captchaImageSelector
             )
 
