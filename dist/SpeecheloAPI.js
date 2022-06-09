@@ -61,7 +61,16 @@ class SpeecheloAPI {
             await page.waitForSelector(passwordInputSelector);
             await page.type(passwordInputSelector, this.password, { delay });
             const captchaImageSelector = '[src^="https://app.blasteronline.com/assets/captcha/"]';
-            const captchaImageSrc = await page.evaluate(captchaImageSelector => { var _a; return ((_a = document.querySelector(captchaImageSelector)) === null || _a === void 0 ? void 0 : _a.src) || null; }, captchaImageSelector);
+            const captchaImageSrc = await page.evaluate(captchaImageSelector => {
+                const captchaImageElement = document.querySelector(captchaImageSelector);
+                if (!captchaImageElement) {
+                    return null;
+                }
+                if (captchaImageElement.offsetParent === null) {
+                    return null;
+                }
+                return captchaImageElement.src || null;
+            }, captchaImageSelector);
             let captcha = null;
             if (captchaImageSrc) {
                 const captchaResolver = this.captchaResolver;
@@ -187,12 +196,11 @@ class SpeecheloAPI {
         try {
             await page.waitForSelector(submitButtonSelector);
             await page.click(submitButtonSelector);
-            
-            const timeOutBeforeDying = 60000
+            const timeOutBeforeDying = 60000;
             const hasNotEnoughPunctuation = await Promise.race([
                 new Promise(async (resolve, reject) => {
                     try {
-                        await page.waitForSelector(notEnoughPunctuationSelector, {timeout: timeOutBeforeDying});
+                        await page.waitForSelector(notEnoughPunctuationSelector, { timeout: timeOutBeforeDying });
                     }
                     catch (error) {
                         reject(error);
@@ -202,7 +210,7 @@ class SpeecheloAPI {
                 }),
                 new Promise(async (resolve, reject) => {
                     try {
-                        await page.waitForSelector(confirmButtonSelector, {timeout: timeOutBeforeDying});
+                        await page.waitForSelector(confirmButtonSelector, { timeout: timeOutBeforeDying });
                     }
                     catch (error) {
                         reject(error);
