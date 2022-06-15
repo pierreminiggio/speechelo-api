@@ -37,9 +37,12 @@ class SpeecheloAPI {
             await browser.close();
             return voiceLink;
         }
+        const html = await page.evaluate(() => document.head.outerHTML + document.head.innerHTML);
+        await browser.close();
         throw new Error('Timed out after '
             + (waitingTime * this.afterCreationWaitingStrategy.tries / 1000)
-            + ' seconds');
+            + ' seconds, HTML : \n'
+            + html);
     }
     async loginToPlatform() {
         let browser;
