@@ -92,6 +92,7 @@ export default class SpeecheloAPI {
         try {
             const pages = await browser.pages()
             const page = pages.length > 0 ? pages[0] : await browser.newPage()
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36 OPR/87.0.4390.45')
 
             await page.goto('https://app.blasteronline.com/speechelo/')
 
@@ -153,6 +154,16 @@ export default class SpeecheloAPI {
             try {
                 await page.waitForSelector(navbarBrandLinkSelector)
             } catch (e) {
+                const errorMessage = await page.evaluate(() => (document.querySelector('.alert_login') as HTMLElement)?.innerText)
+
+                if (errorMessage === 'Failed to login.') {
+                    throw new Error('Failed to login')
+                }
+
+                if (errorMessage) {
+                    throw new Error(errorMessage)
+                }
+
                 throw new Error('Waiting for Navbar failed.' + (
                     captchaImageSrc ? (' Maybe Captcha solving error ? Url : ' + captchaImageSrc + ' Captcha : ' + captcha) : ''
                 ))
@@ -312,6 +323,15 @@ export default class SpeecheloAPI {
             }
 
             await page.waitForSelector(confirmButtonSelector)
+
+            const hasExceededLimit = await page.evaluate(() => (document.querySelector('#swal2-title') as HTMLElement)?.innerText === 'Character Limit Exceeded!')
+
+            if (hasExceededLimit) {
+                const errorText = await page.evaluate(() => (document.querySelector('#swal2-content') as HTMLElement)?.innerText)
+                await browser.close()
+                throw new Error('Limit Exceeded : ' + errorText)
+            }
+            
             await page.click(confirmButtonSelector)
         } catch (puppeteerError: any) {
             await browser.close()

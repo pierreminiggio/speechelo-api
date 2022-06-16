@@ -24,4 +24,7 @@ speecheloAPI.puppeteerOptions = { headless: false };
 (async () => {
     const owenOutputLink = await speecheloAPI.getSoundLink('Tesla fans and owners have been waiting months for the major full self-driving.', new OwenKidMale_1.default());
     console.log(owenOutputLink);
-})();
+})().catch(e => {
+    console.log(e);
+    process.exit(255);
+});

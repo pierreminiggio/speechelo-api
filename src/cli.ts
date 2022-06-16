@@ -39,4 +39,7 @@ const speecheloAPI = new SpeecheloAPI(login, password, captchaResolver);
 (async() => {
     const owenOutputLink = await speecheloAPI.getSoundLink(fileContent, getVoiceFromVoiceName(voice))
     console.log(owenOutputLink)
-})()
+})().catch(e => {
+    console.log(e)
+    process.exit(255)
+})

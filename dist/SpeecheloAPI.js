@@ -55,6 +55,7 @@ class SpeecheloAPI {
         try {
             const pages = await browser.pages();
             const page = pages.length > 0 ? pages[0] : await browser.newPage();
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/101.0.4951.67 Safari/537.36 OPR/87.0.4390.45');
             await page.goto('https://app.blasteronline.com/speechelo/');
             const emailInputSelector = '#loginemail';
             const passwordInputSelector = '#loginpassword';
@@ -95,6 +96,13 @@ class SpeecheloAPI {
                 await page.waitForSelector(navbarBrandLinkSelector);
             }
             catch (e) {
+                const errorMessage = await page.evaluate(() => { var _a; return (_a = document.querySelector('.alert_login')) === null || _a === void 0 ? void 0 : _a.innerText; });
+                if (errorMessage === 'Failed to login.') {
+                    throw new Error('Failed to login');
+                }
+                if (errorMessage) {
+                    throw new Error(errorMessage);
+                }
                 throw new Error('Waiting for Navbar failed.' + (captchaImageSrc ? (' Maybe Captcha solving error ? Url : ' + captchaImageSrc + ' Captcha : ' + captcha) : ''));
             }
             return { browser, page };
@@ -226,6 +234,12 @@ class SpeecheloAPI {
                 await page.click(notEnoughPunctuationSelector);
             }
             await page.waitForSelector(confirmButtonSelector);
+            const hasExceededLimit = await page.evaluate(() => { var _a; return ((_a = document.querySelector('#swal2-title')) === null || _a === void 0 ? void 0 : _a.innerText) === 'Character Limit Exceeded!'; });
+            if (hasExceededLimit) {
+                const errorText = await page.evaluate(() => { var _a; return (_a = document.querySelector('#swal2-content')) === null || _a === void 0 ? void 0 : _a.innerText; });
+                await browser.close();
+                throw new Error('Limit Exceeded : ' + errorText);
+            }
             await page.click(confirmButtonSelector);
         }
         catch (puppeteerError) {
