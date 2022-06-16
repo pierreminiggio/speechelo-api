@@ -33,5 +33,5 @@ const speecheloAPI = new SpeecheloAPI_1.default(login, password, captchaResolver
     console.log(owenOutputLink);
 })().catch(e => {
     console.log(e);
-    process.exit(255);
+    process.exitCode = 255;
 });
