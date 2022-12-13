@@ -108,7 +108,7 @@ export default class SpeecheloAPI {
             await page.type(passwordInputSelector, this.password, {delay})
 
             const captchaImageSelector = '[src^="https://app.blasteronline.com/assets/captcha/"]'
-            const captchaImageSrc = await page.evaluate(
+            const captchaImageSrc: string|null = await page.evaluate(
                 captchaImageSelector => {
                     const captchaImageElement = document.querySelector(captchaImageSelector)
 
@@ -135,7 +135,7 @@ export default class SpeecheloAPI {
                     throw new Error('A Captcha is displayed, you need to set up a captchaResolver to solve it')
                 }
 
-                captcha = await captchaResolver(captchaImageSrc)
+                captcha = await captchaResolver(captchaImageSrc.split('?')[0])
 
                 if (captcha === null) {
                     throw new Error('Solving Captcha failed')

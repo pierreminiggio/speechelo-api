@@ -81,7 +81,7 @@ class SpeecheloAPI {
                 if (!captchaResolver) {
                     throw new Error('A Captcha is displayed, you need to set up a captchaResolver to solve it');
                 }
-                captcha = await captchaResolver(captchaImageSrc);
+                captcha = await captchaResolver(captchaImageSrc.split('?')[0]);
                 if (captcha === null) {
                     throw new Error('Solving Captcha failed');
                 }
